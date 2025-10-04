@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static ru.practicum.shareit.constant.Headers.X_SHARER_USER_ID;
 
 @RestController
 @RequestMapping("/items")
@@ -19,44 +19,36 @@ public class ItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+    public ItemDto createItem(@RequestHeader(X_SHARER_USER_ID) Long ownerId,
                               @Valid @RequestBody ItemDto itemDto) {
-        Item item = ItemMapper.toItem(itemDto);
-        Item created = itemService.create(item, ownerId);
-        return ItemMapper.toItemDto(created);
+        return itemService.create(itemDto, ownerId);
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+    public ItemDto updateItem(@RequestHeader(X_SHARER_USER_ID) Long ownerId,
                               @PathVariable Long itemId,
                               @RequestBody ItemDto itemDto) {
-        Item patch = ItemMapper.toItem(itemDto);
-        Item updated = itemService.update(patch, itemId, ownerId);
-        return ItemMapper.toItemDto(updated);
+        return itemService.update(itemDto, itemId, ownerId);
     }
 
     @GetMapping("/{itemId}")
     public ItemDto findById(@PathVariable Long itemId) {
-        return ItemMapper.toItemDto(itemService.findById(itemId));
+        return itemService.findById(itemId);
     }
 
     @GetMapping
-    public List<ItemDto> findAllByOwner(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return itemService.findAllByOwner(ownerId).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+    public List<ItemDto> findAllByOwner(@RequestHeader(X_SHARER_USER_ID) Long ownerId) {
+        return itemService.findAllByOwner(ownerId);
     }
 
     @GetMapping("/search")
     public List<ItemDto> search(@RequestParam String text) {
-        return itemService.search(text).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+        return itemService.search(text);
     }
 
     @DeleteMapping("/{itemId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+    public void deleteItem(@RequestHeader(X_SHARER_USER_ID) Long ownerId,
                            @PathVariable Long itemId) {
         itemService.delete(itemId, ownerId);
     }

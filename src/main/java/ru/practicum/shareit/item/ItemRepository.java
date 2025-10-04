@@ -9,11 +9,11 @@ public interface ItemRepository {
 
     Item update(Item item);
 
-    void delete(Long id);
+    void delete(Long itemId);
 
-    Item findById(Long id);
+    Item findById(Long itemId);
 
-    List<Item> findAll();
+    List<Item> findAllByOwner(Long ownerId);
 
     List<Item> search(String text);
 }

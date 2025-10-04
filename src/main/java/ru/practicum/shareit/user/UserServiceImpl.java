@@ -3,7 +3,8 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ConflictException;
-import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
@@ -12,54 +13,56 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
-    public User create(User user) {
-        validateUser(user);
-        validateEmailUnique(user.getEmail(), null);
-        return userRepository.create(user);
+    public UserDto create(UserDto dto) {
+        if (dto.getEmail() != null) {
+            validateEmailUnique(dto.getEmail(), null);
+        }
+        User toSave = userMapper.toUser(dto);
+        User saved = userRepository.create(toSave);
+        return userMapper.toUserDto(saved);
     }
 
     @Override
-    public User update(User user) {
-        validateUser(user);
-        if (user.getId() == null) {
-            throw new ValidationException("Id обязателен для обновления");
+    public UserDto update(Long id, UserDto patch) {
+        User existing = userRepository.findById(id);
+
+        if (patch.getEmail() != null) {
+            validateEmailUnique(patch.getEmail(), id);
         }
 
-        User existing = userRepository.findById(user.getId());
+        patch.setId(null);
 
-        String mergedName  = (user.getName()  != null) ? user.getName().trim()  : existing.getName();
-        String mergedEmail = (user.getEmail() != null) ? user.getEmail().trim() : existing.getEmail();
+        userMapper.updateUserFromDto(patch, existing);
 
-        validateEmailUnique(mergedEmail, user.getId());
-
-        existing.setName(mergedName);
-        existing.setEmail(mergedEmail);
-        return userRepository.update(existing);
+        User updated = userRepository.update(existing);
+        return userMapper.toUserDto(updated);
     }
 
     @Override
     public void delete(Long id) {
+        if (userRepository.findAll().stream().noneMatch(u -> u.getId().equals(id))) {
+            throw new NotFoundException("Пользователь не найден: " + id);
+        }
         userRepository.delete(id);
     }
 
     @Override
-    public User findById(Long id) {
-        return userRepository.findById(id);
+    public UserDto findById(Long id) {
+        return userMapper.toUserDto(userRepository.findById(id));
     }
 
     @Override
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<UserDto> findAll() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toUserDto)
+                .toList();
     }
 
-    private void validateUser(User user) {
-        if (user == null) {
-            throw new ValidationException("Пользователь не может быть null");
-        }
-    }
-
+    //При переходе на бд в схеме следует добавить ограничение UNIQUE на поле email.
+    // Получается данная проверка будет уже избыточной. Или я что-то не правильно думаю?
     private void validateEmailUnique(String email, Long excludeUserId) {
         for (User other : userRepository.findAll()) {
             if (other.getEmail() != null

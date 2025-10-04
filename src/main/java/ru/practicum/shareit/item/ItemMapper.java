@@ -1,34 +1,20 @@
 package ru.practicum.shareit.item;
 
+import org.mapstruct.*;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 
-public class ItemMapper {
-    public static ItemDto toItemDto(Item item) {
-        if (item == null) {
-            return null;
-        }
-        return new ItemDto(
-                item.getId(),
-                item.getName(),
-                item.getDescription(),
-                item.getAvailable(),
-                item.getOwner(),
-                item.getRequest()
-        );
-    }
+@Mapper(componentModel = "spring")
+public interface ItemMapper {
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "request", ignore = true)
+    Item toItem(ItemDto dto);
 
-    public static Item toItem(ItemDto dto) {
-        if (dto == null) {
-            return null;
-        }
-        return new Item(
-                dto.getId(),
-                dto.getName(),
-                dto.getDescription(),
-                dto.getAvailable(),
-                dto.getOwner(),
-                dto.getRequest()
-        );
-    }
+    ItemDto toItemDto(Item item);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "request", ignore = true)
+    void updateItemFromDto(ItemDto dto, @MappingTarget Item target);
 }

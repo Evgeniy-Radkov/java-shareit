@@ -2,18 +2,15 @@ package ru.practicum.shareit.item;
 
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 public class InMemoryItemRepository implements ItemRepository {
-    private final Map<Long, Item> items = new HashMap<>();
 
+    private final Map<Long, Item> items = new ConcurrentHashMap<>();
     private long nextId = 1;
 
     @Override
@@ -25,53 +22,46 @@ public class InMemoryItemRepository implements ItemRepository {
 
     @Override
     public Item update(Item item) {
-        if (item.getId() == null) {
-            throw new ValidationException("Id не может быть null");
+        if (item.getId() == null || !items.containsKey(item.getId())) {
+            throw new NotFoundException("Вещь не найдена: " + item.getId());
         }
-        if (items.containsKey(item.getId())) {
-            items.replace(item.getId(), item);
-            return item;
-        } else {
-            throw new NotFoundException("Вещь не найдена");
-        }
+        items.put(item.getId(), item);
+        return item;
     }
 
     @Override
-    public void delete(Long id) {
-        if (!items.containsKey(id)) {
-            throw new NotFoundException("Вещь не найдена: " + id);
-        }
-        items.remove(id);
+    public void delete(Long itemId) {
+        items.remove(itemId);
     }
 
     @Override
-    public Item findById(Long id) {
-        if (!items.containsKey(id)) {
-            throw new NotFoundException("Вещь не найдена: " + id);
+    public Item findById(Long itemId) {
+        Item item = items.get(itemId);
+        if (item == null) {
+            throw new NotFoundException("Вещь не найдена: " + itemId);
         }
-        return items.get(id);
+        return item;
     }
 
     @Override
-    public List<Item> findAll() {
-        return new ArrayList<>(items.values());
+    public List<Item> findAllByOwner(Long ownerId) {
+        return items.values().stream()
+                .filter(i -> i.getOwner() != null && Objects.equals(i.getOwner().getId(), ownerId))
+                .toList();
     }
 
     @Override
     public List<Item> search(String text) {
         if (text == null || text.trim().isBlank()) {
-            return new ArrayList<>();
+            return List.of();
         }
         String q = text.toLowerCase().trim();
-        List<Item> result = new ArrayList<>();
-        for (Item item : items.values()) {
-            if (item.getAvailable() == true && (
-                    (item.getName() != null && item.getName().toLowerCase().contains(q))
-                            || (item.getDescription() != null && item.getDescription().toLowerCase().contains(q))
-            )) {
-                result.add(item);
-            }
-        }
-        return result;
+        return items.values().stream()
+                .filter(i -> Boolean.TRUE.equals(i.getAvailable()))
+                .filter(i ->
+                        (i.getName() != null && i.getName().toLowerCase().contains(q)) ||
+                                (i.getDescription() != null && i.getDescription().toLowerCase().contains(q))
+                )
+                .toList();
     }
 }

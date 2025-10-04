@@ -43,7 +43,4 @@ public class ErrorHandler {
     public ErrorResponse handleConflict(ConflictException e) {
         return new ErrorResponse(e.getMessage());
     }
-
-
-    public record ErrorResponse(String error) {}
 }
