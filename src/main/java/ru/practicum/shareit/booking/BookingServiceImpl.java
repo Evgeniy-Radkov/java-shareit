@@ -84,7 +84,7 @@ public class BookingServiceImpl implements BookingService {
         switch (booking.getStatus()) {
             case APPROVED, REJECTED, CANCELED ->
                     throw new ValidationException("Статус уже зафиксирован и не может быть изменен");
-            case WAITING -> {}
+            case WAITING -> { }
         }
 
         if (approved) {
