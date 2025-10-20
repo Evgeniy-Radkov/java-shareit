@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.item.dto.CommentCreateDto;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.List;
@@ -32,13 +34,19 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto findById(@PathVariable Long itemId) {
-        return itemService.findById(itemId);
+    public ItemDto findById(
+            @RequestHeader(X_SHARER_USER_ID) Long userId,
+            @PathVariable Long itemId) {
+        return itemService.findById(itemId, userId);
     }
 
+
     @GetMapping
-    public List<ItemDto> findAllByOwner(@RequestHeader(X_SHARER_USER_ID) Long ownerId) {
-        return itemService.findAllByOwner(ownerId);
+    public List<ItemDto> findAllByOwner(
+            @RequestHeader(X_SHARER_USER_ID) Long ownerId,
+            @RequestParam(defaultValue = "0") int from,
+            @RequestParam(defaultValue = "10") int size) {
+        return itemService.findAllByOwner(ownerId, from, size);
     }
 
     @GetMapping("/search")
@@ -51,5 +59,12 @@ public class ItemController {
     public void deleteItem(@RequestHeader(X_SHARER_USER_ID) Long ownerId,
                            @PathVariable Long itemId) {
         itemService.delete(itemId, ownerId);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto addComment(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                 @PathVariable Long itemId,
+                                 @Valid @RequestBody CommentCreateDto dto) {
+        return itemService.addComment(userId, itemId, dto);
     }
 }

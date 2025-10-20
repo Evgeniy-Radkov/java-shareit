@@ -1,7 +1,9 @@
 package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -9,6 +11,7 @@ import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
 
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -17,43 +20,48 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto create(UserDto dto) {
-        if (dto.getEmail() != null) {
-            validateEmailUnique(dto.getEmail(), null);
+        try {
+            User toSave = userMapper.toUser(dto);
+            User saved = userRepository.save(toSave);
+            return userMapper.toUserDto(saved);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Email уже используется");
         }
-        User toSave = userMapper.toUser(dto);
-        User saved = userRepository.create(toSave);
-        return userMapper.toUserDto(saved);
     }
 
     @Override
     public UserDto update(Long id, UserDto patch) {
-        User existing = userRepository.findById(id);
-
-        if (patch.getEmail() != null) {
-            validateEmailUnique(patch.getEmail(), id);
-        }
+        User existing = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден: " + id));
 
         patch.setId(null);
 
-        userMapper.updateUserFromDto(patch, existing);
-
-        User updated = userRepository.update(existing);
-        return userMapper.toUserDto(updated);
+        try {
+            userMapper.updateUserFromDto(patch, existing);
+            User saved = userRepository.save(existing);
+            return userMapper.toUserDto(saved);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Email уже используется");
+        }
     }
 
     @Override
     public void delete(Long id) {
-        if (userRepository.findAll().stream().noneMatch(u -> u.getId().equals(id))) {
+        if (!userRepository.existsById(id)) {
             throw new NotFoundException("Пользователь не найден: " + id);
         }
-        userRepository.delete(id);
+        userRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public UserDto findById(Long id) {
-        return userMapper.toUserDto(userRepository.findById(id));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден: " + id));
+        return userMapper.toUserDto(user);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<UserDto> findAll() {
         return userRepository.findAll().stream()
@@ -61,15 +69,4 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
-    //При переходе на бд в схеме следует добавить ограничение UNIQUE на поле email.
-    // Получается данная проверка будет уже избыточной. Или я что-то не правильно думаю?
-    private void validateEmailUnique(String email, Long excludeUserId) {
-        for (User other : userRepository.findAll()) {
-            if (other.getEmail() != null
-                    && other.getEmail().equalsIgnoreCase(email)
-                    && (excludeUserId == null || !other.getId().equals(excludeUserId))) {
-                throw new ConflictException("Email уже используется");
-            }
-        }
-    }
 }
