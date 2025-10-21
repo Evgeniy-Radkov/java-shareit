@@ -5,8 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.request.model.ItemRequest;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -23,6 +24,10 @@ public class ItemDto {
     @NotNull(message = "Доступность должна быть указана")
     private Boolean available;
 
-    private User owner;
-    private ItemRequest request;
+    private Long ownerId;
+    private Long requestId;
+
+    private BookingShortDto lastBooking;
+    private BookingShortDto nextBooking;
+    private List<CommentDto> comments;
 }

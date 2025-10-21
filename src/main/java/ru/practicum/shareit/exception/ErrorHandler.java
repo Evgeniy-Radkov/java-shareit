@@ -32,15 +32,15 @@ public class ErrorHandler {
         return new ErrorResponse(e.getMessage());
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler(Exception.class)
-    public ErrorResponse handleOther(Exception e) {
-        return new ErrorResponse("Internal error: " + e.getMessage());
-    }
-
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(ConflictException.class)
     public ErrorResponse handleConflict(ConflictException e) {
         return new ErrorResponse(e.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Throwable.class)
+    public ErrorResponse handleAny(Throwable t) {
+        return new ErrorResponse("Internal error: " + t.getMessage());
     }
 }
