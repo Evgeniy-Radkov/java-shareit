@@ -12,6 +12,8 @@ import ru.practicum.shareit.booking.model.BookingState;
 
 import java.util.List;
 
+import static ru.practicum.shareit.constant.Headers.X_SHARER_USER_ID;
+
 @RestController
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
@@ -20,26 +22,26 @@ public class BookingController {
     private final BookingService service;
 
     @PostMapping
-    public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
+    public BookingDto create(@RequestHeader(X_SHARER_USER_ID) Long userId,
                              @Valid @RequestBody BookingCreateDto dto) {
         return service.create(userId, dto);
     }
 
     @PatchMapping("/{id}")
-    public BookingDto approve(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+    public BookingDto approve(@RequestHeader(X_SHARER_USER_ID) Long ownerId,
                               @PathVariable Long id,
                               @RequestParam("approved") boolean approved) {
         return service.approve(ownerId, id, approved);
     }
 
     @GetMapping("/{id}")
-    public BookingDto findById(@RequestHeader("X-Sharer-User-Id") Long requesterId,
+    public BookingDto findById(@RequestHeader(X_SHARER_USER_ID) Long requesterId,
                                @PathVariable Long id) {
         return service.findById(requesterId, id);
     }
 
     @GetMapping
-    public List<BookingDto> findByBooker(@RequestHeader("X-Sharer-User-Id") Long userId,
+    public List<BookingDto> findByBooker(@RequestHeader(X_SHARER_USER_ID) Long userId,
                                          @RequestParam(defaultValue = "ALL") BookingState state,
                                          @RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                          @RequestParam(defaultValue = "20") @Positive int size) {
@@ -47,7 +49,7 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> findByOwner(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+    public List<BookingDto> findByOwner(@RequestHeader(X_SHARER_USER_ID) Long ownerId,
                                         @RequestParam(defaultValue = "ALL") BookingState state,
                                         @RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                         @RequestParam(defaultValue = "20") @Positive int size) {

@@ -4,7 +4,6 @@ import org.mapstruct.*;
 import ru.practicum.shareit.booking.dto.BookingCreateDto;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
@@ -25,8 +24,4 @@ public interface BookingMapper {
             @Mapping(target = "status", constant = "WAITING")
     })
     Booking toEntity(BookingCreateDto dto, Item item, User booker);
-
-    @BeanMapping(ignoreByDefault = true)
-    @Mapping(target = "status", source = "status")
-    void updateStatus(@MappingTarget Booking booking, BookingStatus status);
 }
