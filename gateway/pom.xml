@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>gateway</artifactId>
-    <name>shareit-gateway</name>
+    <name>gateway</name>
 
     <dependencies>
         <dependency>
